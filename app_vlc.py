@@ -4,7 +4,6 @@ from tkinter import *
 import vlc
 from mutagen import File
 
-
 root = Tk()
 root.title("music_player")
 root.geometry("700x500")
@@ -57,6 +56,35 @@ def get_track_info(filepath):
 
     return title, artist
 
+def get_selected_song():
+    selection = songlist.curselection()
+    if not selection:
+        return None
+    
+    return songs[selection[0]]["path"]
+
+def play_music():
+    global current_song, paused
+
+    song_path = get_selected_song()
+    if not song_path:
+        return
+    
+    if current_song != song_path:
+        player.set_media(vlc.Media(song_path))
+        current_song = song_path
+
+    player.play()
+    paused = False
+
+def pause_music():
+    global paused
+    if player.is_playing():
+        player.pause()
+        paused = True
+
+player = vlc.MediaPlayer()
+
 organise_menu = Menu(menubar, tearoff=False)
 organise_menu.add_command(label='Select Folder', command=load_music)
 menubar.add_cascade(label='Organise', menu=organise_menu)
@@ -88,11 +116,16 @@ control_frame = Frame(root)
 control_frame.pack(side="bottom")
 
 # Add buttons to control_frame
-play_btn = Button(control_frame, image=play_btn_image, borderwidth=1).grid(row=0, column=0, padx=7, pady=10)
-pause_btn = Button(control_frame, image=pause_btn_image, borderwidth=1).grid(row=0, column=1, padx=7, pady=10)
-previous_btn = Button(control_frame, image=previous_btn_image, borderwidth=1).grid(row=0, column=2, padx=7, pady=10)
-next_btn = Button(control_frame, image=next_btn_image, borderwidth=1).grid(row=0, column=3, padx=7, pady=10)
+play_btn = Button(control_frame, image=play_btn_image, borderwidth=1, command=play_music)
+play_btn.grid(row=0, column=0, padx=7, pady=10)
 
+pause_btn = Button(control_frame, image=pause_btn_image, borderwidth=1, command=pause_music)
+pause_btn.grid(row=0, column=1, padx=7, pady=10)
 
+previous_btn = Button(control_frame, image=previous_btn_image, borderwidth=1)
+previous_btn.grid(row=0, column=2, padx=7, pady=10)
+
+next_btn = Button(control_frame, image=next_btn_image, borderwidth=1)
+next_btn.grid(row=0, column=3, padx=7, pady=10)
 
 root.mainloop()
