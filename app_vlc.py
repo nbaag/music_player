@@ -15,6 +15,8 @@ songs = []
 current_song = ""
 paused = False
 
+dragging = False
+
 def load_music():
     global current_song, songs
 
@@ -43,7 +45,6 @@ def load_music():
     if songs:
         songlist.select_set(0)
         current_song = songs[0]["path"]
-
 
 def get_track_info(filepath):
     audio = File(filepath, easy=True)
@@ -82,6 +83,30 @@ def pause_music():
     if player.is_playing():
         player.pause()
         paused = True
+
+def change_volume(val):
+    player.audio_set_volume(int(val))
+
+def star_drag(event):
+    global dragging
+    dragging = True
+
+def stop_drag(event):
+    global dragging
+    dragging = False
+    seek_music()
+
+def seek_music():
+    value = position_slider.get()
+    player.set_position(value / 100)
+
+def update_position():
+    if player.is_playing() and not dragging:
+        pos = player.get_position()
+        if pos != -1:
+            position_slider.set(pos * 100)
+
+    root.after(500, update_position)
 
 player = vlc.MediaPlayer()
 
@@ -127,5 +152,17 @@ previous_btn.grid(row=0, column=2, padx=7, pady=10)
 
 next_btn = Button(control_frame, image=next_btn_image, borderwidth=1)
 next_btn.grid(row=0, column=3, padx=7, pady=10)
+
+# volume control scale
+volume_control = Scale(control_frame, orient=HORIZONTAL, length=100, from_=1, to=100, command=change_volume)
+volume_control.grid(row=0, column=5)
+
+# position control scale
+position_slider = Scale(control_frame, orient=HORIZONTAL, from_=0, to=100, length=300, showvalue=False)
+position_slider.grid(row=1, column=0, columnspan=4, sticky="ew")
+position_slider.bind("<Button-1>", star_drag)
+position_slider.bind("<ButtonRelease-1>", stop_drag)
+
+update_position()
 
 root.mainloop()
