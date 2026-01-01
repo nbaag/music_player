@@ -13,6 +13,7 @@ root.config(menu=menubar)
 
 songs = []
 current_song = ""
+current_index = 0
 paused = False
 
 dragging = False
@@ -65,24 +66,65 @@ def get_selected_song():
     return songs[selection[0]]["path"]
 
 def play_music():
-    global current_song, paused
+    global current_song, current_index, paused
 
-    song_path = get_selected_song()
-    if not song_path:
+    selection = songlist.curselection()
+    if not selection:
         return
     
+    current_index = selection[0]
+    song_path = songs[current_index]["path"]
+
     if current_song != song_path:
         player.set_media(vlc.Media(song_path))
         current_song = song_path
+        player.play()
+        paused = False
+        return
 
-    player.play()
-    paused = False
+    if paused:
+        player.play()
+        paused = False
 
 def pause_music():
     global paused
     if player.is_playing():
         player.pause()
         paused = True
+
+def next_track():
+    global current_index
+
+    if not songs:
+        return
+    
+    current_index += 1
+
+    if current_index >= len(songs):
+        current_index = 0
+
+    songlist.select_clear(0, END)
+    songlist.select_set(current_index)
+    songlist.activate(current_index)
+
+    play_music()
+
+def previous_track():
+    global current_index
+
+    if not songs:
+        return
+    
+    current_index -= 1
+
+    if current_index < 0:
+        current_index = len(songs) - 1
+
+    songlist.select_clear(0, END)
+    songlist.select_set(current_index)
+    songlist.activate(current_index)
+
+    play_music()
 
 def change_volume(val):
     player.audio_set_volume(int(val))
@@ -147,10 +189,10 @@ play_btn.grid(row=0, column=0, padx=7, pady=10)
 pause_btn = Button(control_frame, image=pause_btn_image, borderwidth=1, command=pause_music)
 pause_btn.grid(row=0, column=1, padx=7, pady=10)
 
-previous_btn = Button(control_frame, image=previous_btn_image, borderwidth=1)
+previous_btn = Button(control_frame, image=previous_btn_image, borderwidth=1, command=previous_track)
 previous_btn.grid(row=0, column=2, padx=7, pady=10)
 
-next_btn = Button(control_frame, image=next_btn_image, borderwidth=1)
+next_btn = Button(control_frame, image=next_btn_image, borderwidth=1, command=next_track)
 next_btn.grid(row=0, column=3, padx=7, pady=10)
 
 # volume control scale
